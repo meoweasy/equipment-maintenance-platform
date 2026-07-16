@@ -4,7 +4,7 @@ import com.example.equipment.dto.EquipmentResponse;
 import com.example.equipment.dto.EquipmentTypeResponse;
 import com.example.equipment.entity.Equipment;
 import com.example.equipment.entity.EquipmentType;
-import com.example.equipment.utils.EtagUtils;
+import com.example.platform.common.etag.EtagUtils;
 import org.springframework.stereotype.Component;
 
 @Component

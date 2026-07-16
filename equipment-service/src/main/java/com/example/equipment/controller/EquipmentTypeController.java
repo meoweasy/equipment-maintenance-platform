@@ -3,7 +3,7 @@ package com.example.equipment.controller;
 import com.example.equipment.dto.EquipmentTypeCreateRequest;
 import com.example.equipment.dto.EquipmentTypeListFilter;
 import com.example.equipment.dto.EquipmentTypeResponse;
-import com.example.equipment.dto.PageDto;
+import com.example.platform.common.pagination.PageDto;
 import com.example.equipment.services.EquipmentTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;

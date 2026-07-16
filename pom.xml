@@ -21,6 +21,7 @@
     <description>Multi-module repository with two independent Spring Boot microservices</description>
 
     <modules>
+        <module>platform-common</module>
         <module>equipment-service</module>
         <module>maintenance-service</module>
     </modules>

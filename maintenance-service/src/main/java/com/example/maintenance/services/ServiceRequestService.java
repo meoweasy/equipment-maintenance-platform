@@ -1,6 +1,6 @@
 package com.example.maintenance.services;
 
-import com.example.maintenance.dto.PageDto;
+import com.example.platform.common.pagination.PageDto;
 import com.example.maintenance.dto.ServiceRequestCreateRequest;
 import com.example.maintenance.dto.ServiceRequestListFilter;
 import com.example.maintenance.dto.ServiceRequestResponse;

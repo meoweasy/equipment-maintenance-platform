@@ -1,7 +1,7 @@
 package com.example.equipment.entity;
 
-import com.example.equipment.utils.ksuuid.KsuidVersion;
-import com.example.equipment.utils.ksuuid.KsuidVersionType;
+import com.example.platform.common.etag.KsuidVersion;
+import com.example.platform.common.etag.KsuidVersionType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import org.hibernate.annotations.Type;

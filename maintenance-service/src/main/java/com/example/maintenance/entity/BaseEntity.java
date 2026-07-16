@@ -1,7 +1,7 @@
 package com.example.maintenance.entity;
 
-import com.example.maintenance.utils.ksuuid.KsuidVersion;
-import com.example.maintenance.utils.ksuuid.KsuidVersionType;
+import com.example.platform.common.etag.KsuidVersion;
+import com.example.platform.common.etag.KsuidVersionType;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import jakarta.persistence.*;
 import lombok.Getter;

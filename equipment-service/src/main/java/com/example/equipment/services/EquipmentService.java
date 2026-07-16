@@ -3,7 +3,7 @@ package com.example.equipment.services;
 import com.example.equipment.dto.EquipmentCreateRequest;
 import com.example.equipment.dto.EquipmentListFilter;
 import com.example.equipment.dto.EquipmentResponse;
-import com.example.equipment.dto.PageDto;
+import com.example.platform.common.pagination.PageDto;
 import com.example.equipment.enums.EquipmentStatus;
 
 public interface EquipmentService {
