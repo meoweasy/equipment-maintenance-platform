@@ -1,0 +1,67 @@
+services:
+  equipment-db:
+    image: postgres:16-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: equipment_db
+      POSTGRES_USER: equipment
+      POSTGRES_PASSWORD: equipment
+    volumes:
+      - equipment-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U equipment -d equipment_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+#  maintenance-db:
+#    image: postgres:16-alpine
+#    ports:
+#      - "5434:5432"
+#    environment:
+#      POSTGRES_DB: maintenance_db
+#      POSTGRES_USER: maintenance
+#      POSTGRES_PASSWORD: maintenance
+#    volumes:
+#      - maintenance-db-data:/var/lib/postgresql/data
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U maintenance -d maintenance_db"]
+#      interval: 5s
+#      timeout: 5s
+#      retries: 10
+
+  equipment-service:
+    build:
+      context: .
+      dockerfile: equipment-service/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      DB_URL: jdbc:postgresql://equipment-db:5432/equipment_db
+      DB_USERNAME: equipment
+      DB_PASSWORD: equipment
+    depends_on:
+      equipment-db:
+        condition: service_healthy
+
+#  maintenance-service:
+#    build:
+#      context: .
+#      dockerfile: maintenance-service/Dockerfile
+#    ports:
+#      - "8082:8082"
+#    environment:
+#      EQUIPMENT_SERVICE_URL: http://equipment-service:8081
+#      DB_URL: jdbc:postgresql://maintenance-db:5432/maintenance_db
+#      DB_USERNAME: maintenance
+#      DB_PASSWORD: maintenance
+#    depends_on:
+#      equipment-service:
+#        condition: service_started
+#      maintenance-db:
+#        condition: service_healthy
+
+volumes:
+  equipment-db-data:
+#  maintenance-db-data:

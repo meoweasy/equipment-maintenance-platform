@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: maintenance-service
+
+server:
+  port: 8082
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+info:
+  app:
+    name: Maintenance Service
+    java: 17
+
+services:
+  equipment:
+    base-url: ${EQUIPMENT_SERVICE_URL:http://localhost:8081}

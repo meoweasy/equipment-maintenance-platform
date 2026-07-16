@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: equipment-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/equipment_db}
+    username: ${DB_USERNAME:equipment}
+    password: ${DB_PASSWORD:equipment}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+server:
+  port: 8081
+
+application:
+  api-path: /api
+  internal-path: /internal
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+info:
+  app:
+    name: Equipment Service
+    java: 17
