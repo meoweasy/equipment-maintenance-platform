@@ -6,6 +6,13 @@ import com.example.equipment.dto.EquipmentTypeResponse;
 import com.example.equipment.dto.PageDto;
 import com.example.equipment.entity.EquipmentType;
 import com.example.equipment.mapper.EquipmentMapper;
+import com.example.equipment.exception.BlankFieldException;
+import com.example.equipment.exception.InvalidIdException;
+import com.example.equipment.exception.RequiredFieldException;
+import com.example.equipment.exception.ResourceAlreadyExistsException;
+import com.example.equipment.exception.ResourceNotFoundException;
+import com.example.equipment.exception.ValueTooLargeException;
+import com.example.equipment.exception.ValueTooSmallException;
 import com.example.equipment.repository.EquipmentTypeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -42,7 +49,7 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
 
         String name = request.name().trim();
         if (equipmentTypeRepository.existsByName(name)) {
-            throw new IllegalArgumentException("Equipment type with name already exists");
+            throw new ResourceAlreadyExistsException("Equipment type with name already exists");
         }
 
         EquipmentType equipmentType = new EquipmentType();
@@ -83,9 +90,7 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
     public EquipmentTypeResponse getById(String id) {
         UUID equipmentTypeId = validateAndMapId(id, "Id");
         EquipmentType equipmentType = equipmentTypeRepository.findById(equipmentTypeId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Equipment type with id " + equipmentTypeId + " not found"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment type", equipmentTypeId));
         return equipmentMapper.toTypeResponse(equipmentType);
     }
 
@@ -93,25 +98,23 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
     @Transactional
     public EquipmentTypeResponse update(String id, EquipmentTypeCreateRequest request) {
         if (id == null || id.isEmpty()) {
-            throw new IllegalArgumentException("Id is required");
+            throw new RequiredFieldException("Id");
         }
         UUID equipmentTypeId;
         try {
             equipmentTypeId = UUID.fromString(id);
         } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException("Id is not a valid UUID");
+            throw new InvalidIdException("Id");
         }
         validateCreate(request);
 
         EquipmentType equipmentType = equipmentTypeRepository.findById(equipmentTypeId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Equipment type with id " + equipmentTypeId + " not found"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment type", equipmentTypeId));
 
         String name = request.name().trim();
         if (!equipmentType.getName().equals(name)
                 && equipmentTypeRepository.existsByName(name)) {
-            throw new IllegalArgumentException("Equipment type with name already exists");
+            throw new ResourceAlreadyExistsException("Equipment type with name already exists");
         }
 
         equipmentType.setName(name);
@@ -129,62 +132,60 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
         UUID equipmentTypeId = validateAndMapId(id, "Id");
 
         EquipmentType equipmentType = equipmentTypeRepository.findById(equipmentTypeId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Equipment type with id " + equipmentTypeId + " not found"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment type", equipmentTypeId));
         equipmentTypeRepository.delete(equipmentType);
     }
 
     private void validateCreate(EquipmentTypeCreateRequest request) {
         if (request == null) {
-            throw new IllegalArgumentException("Create request is required");
+            throw new RequiredFieldException("Create request");
         }
         if (request.name() == null || request.name().isEmpty()) {
-            throw new IllegalArgumentException("Name is required");
+            throw new RequiredFieldException("Name");
         }
         if (request.name().isBlank()) {
-            throw new IllegalArgumentException("Name cannot consist of only spaces");
+            throw new BlankFieldException("Name");
         }
 
         if (request.manufacturer() == null || request.manufacturer().isEmpty()) {
-            throw new IllegalArgumentException("Manufacturer is required");
+            throw new RequiredFieldException("Manufacturer");
         }
         if (request.manufacturer().isBlank()) {
-            throw new IllegalArgumentException("Manufacturer cannot consist of only spaces");
+            throw new BlankFieldException("Manufacturer");
         }
 
         if (request.maintenanceIntervalDays() == null) {
-            throw new IllegalArgumentException("Maintenance interval days is required");
+            throw new RequiredFieldException("Maintenance interval days");
         }
         if (request.maintenanceIntervalDays() < 1) {
-            throw new IllegalArgumentException("Maintenance interval days must be at least 1");
+            throw new ValueTooSmallException("Maintenance interval days", 1);
         }
 
         if (request.description() != null && request.description().isBlank()) {
-            throw new IllegalArgumentException("Description cannot consist of only spaces");
+            throw new BlankFieldException("Description");
         }
     }
 
     private void validateList(Integer pageSize, Integer pageNumber) {
         if (pageNumber != null && pageNumber < 0) {
-            throw new IllegalArgumentException("Page number must not be negative");
+            throw new ValueTooSmallException("Page number", 0);
         }
         if (pageSize != null && pageSize < PAGE_SIZE_MIN) {
-            throw new IllegalArgumentException("Page size must be at least 1");
+            throw new ValueTooSmallException("Page size", PAGE_SIZE_MIN);
         }
         if (pageSize != null && pageSize > PAGE_SIZE_MAX) {
-            throw new IllegalArgumentException("Page size is too large");
+            throw new ValueTooLargeException("Page size", PAGE_SIZE_MAX);
         }
     }
 
     private UUID validateAndMapId(String id, String fieldName) {
         if (id == null || id.isEmpty()) {
-            throw new IllegalArgumentException(fieldName + " is required");
+            throw new RequiredFieldException(fieldName);
         }
         try {
             return UUID.fromString(id);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(fieldName + " is not a valid UUID");
+            throw new InvalidIdException(fieldName);
         }
     }
 

@@ -8,8 +8,16 @@ import com.example.equipment.entity.Equipment;
 import com.example.equipment.entity.EquipmentType;
 import com.example.equipment.enums.EquipmentStatus;
 import com.example.equipment.mapper.EquipmentMapper;
+import com.example.equipment.exception.BlankFieldException;
+import com.example.equipment.exception.InvalidFieldValueException;
+import com.example.equipment.exception.InvalidIdException;
+import com.example.equipment.exception.RequiredFieldException;
+import com.example.equipment.exception.ResourceAlreadyExistsException;
+import com.example.equipment.exception.ResourceNotFoundException;
+import com.example.equipment.exception.StatusChangeNotAllowedException;
+import com.example.equipment.exception.ValueTooLargeException;
+import com.example.equipment.exception.ValueTooSmallException;
 import com.example.equipment.repository.EquipmentRepository;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -40,16 +48,12 @@ public class EquipmentServiceImpl implements EquipmentService {
         validateCreate(request);
 
         if (equipmentRepository.existsByInventoryNumber(request.inventoryNumber())) {
-            throw new IllegalArgumentException(
-                    "Equipment with inventory number already exists"
-            );
+            throw new ResourceAlreadyExistsException("Equipment with inventory number already exists");
         }
 
         UUID equipmentTypeId = validateAndMapId(request.equipmentTypeId(), "EquipmentTypeId");
         EquipmentType equipmentType = equipmentTypeService.getById(equipmentTypeId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "EquipmentTypeId is not valid"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment type", equipmentTypeId));
 
         Equipment equipment = Equipment.create(
                 request.name().trim(),
@@ -88,9 +92,7 @@ public class EquipmentServiceImpl implements EquipmentService {
         } else {
             UUID equipmentTypeId = validateAndMapId(filter.equipmentTypeId(), "EquipmentTypeId");
             EquipmentType equipmentType = equipmentTypeService.getById(equipmentTypeId)
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "EquipmentTypeId is not valid"
-                    ));
+                    .orElseThrow(() -> new ResourceNotFoundException("Equipment type", equipmentTypeId));
             equipmentPage = equipmentRepository.findAllByEquipmentType(equipmentType, pageable);
         }
 
@@ -102,9 +104,7 @@ public class EquipmentServiceImpl implements EquipmentService {
         UUID equipmentId = validateAndMapId(id, "Id");
 
         Equipment equipment = equipmentRepository.findById(equipmentId)
-                .orElseThrow(() -> new RuntimeException (
-                        "Equipment with id " + equipmentId + " not found"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment", equipmentId));
 
         return equipmentMapper.toResponse(equipment);
     }
@@ -116,22 +116,16 @@ public class EquipmentServiceImpl implements EquipmentService {
         validateCreate(request);
 
         Equipment equipment = equipmentRepository.findById(equipmentId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Equipment with id " + equipmentId + " not found"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment", equipmentId));
 
         if (equipment.getInventoryNumber() != request.inventoryNumber()
                 && equipmentRepository.existsByInventoryNumber(request.inventoryNumber())) {
-            throw new IllegalArgumentException(
-                    "Equipment with inventory number already exists"
-            );
+            throw new ResourceAlreadyExistsException("Equipment with inventory number already exists");
         }
 
         UUID equipmentTypeId = validateAndMapId(request.equipmentTypeId(), "EquipmentTypeId");
         EquipmentType equipmentType = equipmentTypeService.getById(equipmentTypeId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "EquipmentTypeId is not valid"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment type", equipmentTypeId));
 
         equipment.setName(request.name().trim());
         equipment.setInventoryNumber(request.inventoryNumber());
@@ -145,9 +139,7 @@ public class EquipmentServiceImpl implements EquipmentService {
     public void delete(String id) {
         UUID equipmentId = validateAndMapId(id, "Id");
         Equipment equipment = equipmentRepository.findById(equipmentId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Equipment with id " + equipmentId + " not found"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment", equipmentId));
         equipmentRepository.delete(equipment);
     }
 
@@ -156,26 +148,22 @@ public class EquipmentServiceImpl implements EquipmentService {
     public EquipmentResponse changeStatus(String id, String status) {
         UUID equipmentId = validateAndMapId(id, "Id");
         if (status == null || status.isBlank()) {
-            throw new IllegalArgumentException("Status is required");
+            throw new RequiredFieldException("Status");
         }
 
         EquipmentStatus equipmentStatus;
         try {
             equipmentStatus = EquipmentStatus.valueOf(status.trim());
         } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException("Status is not valid");
+            throw new InvalidFieldValueException("Status");
         }
 
         Equipment equipment = equipmentRepository.findById(equipmentId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Equipment with id " + equipmentId + " not found"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment", equipmentId));
 
         if (equipment.getStatus() == EquipmentStatus.UNDER_MAINTENANCE
                 && equipmentStatus == EquipmentStatus.DECOMMISSIONED) {
-            throw new IllegalArgumentException(
-                    "Equipment under maintenance cannot be decommissioned"
-            );
+            throw new StatusChangeNotAllowedException("Equipment under maintenance cannot be decommissioned");
         }
 
         equipment.setStatus(equipmentStatus);
@@ -188,51 +176,51 @@ public class EquipmentServiceImpl implements EquipmentService {
 
     private void validateList(Integer pageSize, Integer pageNumber) {
         if (pageNumber != null && pageNumber < 0) {
-            throw new IllegalArgumentException("Page number must not be negative");
+            throw new ValueTooSmallException("Page number", 0);
         }
         if (pageSize != null && pageSize < PAGE_SIZE_MIN) {
-            throw new IllegalArgumentException("Page size must be at least 1");
+            throw new ValueTooSmallException("Page size", PAGE_SIZE_MIN);
         }
         if (pageSize != null && pageSize > PAGE_SIZE_MAX) {
-            throw new IllegalArgumentException("Page size is too large");
+            throw new ValueTooLargeException("Page size", PAGE_SIZE_MAX);
         }
     }
 
     private void validateCreate(EquipmentCreateRequest request) {
         if (request == null) {
-            throw new IllegalArgumentException("Create request is required");
+            throw new RequiredFieldException("Create request");
         }
 
         if (request.name() == null || request.name().isEmpty()) {
-            throw new IllegalArgumentException("Name is required");
+            throw new RequiredFieldException("Name");
         }
         if (request.name().isBlank()) {
-            throw new IllegalArgumentException("Name cannot consist of only spaces");
+            throw new BlankFieldException("Name");
         }
 
         if (request.inventoryNumber() == null) {
-            throw new IllegalArgumentException("Inventory number is required");
+            throw new RequiredFieldException("Inventory number");
         }
         if (request.inventoryNumber() < 1) {
-            throw new IllegalArgumentException("The inventory number must not be less than 1");
+            throw new ValueTooSmallException("Inventory number", 1);
         }
 
         if (request.location() == null || request.location().isEmpty()) {
-            throw new IllegalArgumentException("Location is required");
+            throw new RequiredFieldException("Location");
         }
         if (request.location().isBlank()) {
-            throw new IllegalArgumentException("Location cannot consist of only spaces");
+            throw new BlankFieldException("Location");
         }
     }
 
     private UUID validateAndMapId(String id, String fieldName) {
         if (id == null || id.isEmpty()) {
-            throw new IllegalArgumentException(fieldName + " is required");
+            throw new RequiredFieldException(fieldName);
         }
         try {
             return UUID.fromString(id);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(fieldName + " is not a valid UUID");
+            throw new InvalidIdException(fieldName);
         }
     }
 
