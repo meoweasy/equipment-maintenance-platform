@@ -23,8 +23,8 @@ public interface EquipmentTypeService {
 
     EquipmentTypeResponse getById(String id);
 
-    EquipmentTypeResponse update(String id, EquipmentTypeCreateRequest request);
+    EquipmentTypeResponse update(String id, String etag, EquipmentTypeCreateRequest request);
 
-    void delete(String id);
+    void delete(String id, String etag);
 
 }

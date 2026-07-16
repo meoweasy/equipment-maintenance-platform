@@ -1,7 +1,5 @@
 package com.example.equipment.dto;
 
-import com.example.equipment.utils.ksuuid.KsuidVersion;
-
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -13,6 +11,6 @@ public record EquipmentTypeResponse(
         int maintenanceIntervalDays,
         LocalDate createdAt,
         LocalDate updatedAt,
-        KsuidVersion etag
+        String etag
 ) {
 }

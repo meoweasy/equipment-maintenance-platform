@@ -6,6 +6,7 @@ import com.example.equipment.dto.EquipmentTypeResponse;
 import com.example.equipment.dto.PageDto;
 import com.example.equipment.services.EquipmentTypeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -20,15 +21,13 @@ public class EquipmentTypeController {
     private final EquipmentTypeService equipmentTypeService;
 
     @PostMapping
-    public ResponseEntity<EquipmentTypeResponse> create(
-            @RequestBody EquipmentTypeCreateRequest request
-    ) {
+    public ResponseEntity<EquipmentTypeResponse> create(@RequestBody EquipmentTypeCreateRequest request) {
         EquipmentTypeResponse response = equipmentTypeService.create(request);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(response.id())
                 .toUri();
-        return ResponseEntity.created(location).body(response);
+        return ResponseEntity.created(location).eTag(response.etag()).body(response);
     }
 
     @GetMapping
@@ -42,20 +41,28 @@ public class EquipmentTypeController {
 
     @GetMapping("/{id}")
     public ResponseEntity<EquipmentTypeResponse> getById(@PathVariable String id) {
-        return ResponseEntity.ok(equipmentTypeService.getById(id));
+        return withEtag(equipmentTypeService.getById(id));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<EquipmentTypeResponse> update(
             @PathVariable String id,
+            @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String etag,
             @RequestBody EquipmentTypeCreateRequest request
     ) {
-        return ResponseEntity.ok(equipmentTypeService.update(id, request));
+        return withEtag(equipmentTypeService.update(id, etag, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
-        equipmentTypeService.delete(id);
+    public ResponseEntity<Void> delete(
+            @PathVariable String id,
+            @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String etag
+    ) {
+        equipmentTypeService.delete(id, etag);
         return ResponseEntity.noContent().build();
+    }
+
+    private ResponseEntity<EquipmentTypeResponse> withEtag(EquipmentTypeResponse response) {
+        return ResponseEntity.ok().eTag(response.etag()).body(response);
     }
 }

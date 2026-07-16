@@ -14,6 +14,7 @@ import com.example.equipment.exception.ResourceNotFoundException;
 import com.example.equipment.exception.ValueTooLargeException;
 import com.example.equipment.exception.ValueTooSmallException;
 import com.example.equipment.repository.EquipmentTypeRepository;
+import com.example.equipment.utils.EtagUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -60,7 +61,7 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
         equipmentType.setManufacturer(request.manufacturer().trim());
         equipmentType.setMaintenanceIntervalDays(request.maintenanceIntervalDays());
 
-        return equipmentMapper.toTypeResponse(equipmentTypeRepository.save(equipmentType));
+        return equipmentMapper.toTypeResponse(equipmentTypeRepository.saveAndFlush(equipmentType));
     }
 
     @Override
@@ -96,7 +97,7 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
 
     @Override
     @Transactional
-    public EquipmentTypeResponse update(String id, EquipmentTypeCreateRequest request) {
+    public EquipmentTypeResponse update(String id, String etag, EquipmentTypeCreateRequest request) {
         if (id == null || id.isEmpty()) {
             throw new RequiredFieldException("Id");
         }
@@ -110,6 +111,7 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
 
         EquipmentType equipmentType = equipmentTypeRepository.findById(equipmentTypeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment type", equipmentTypeId));
+        EtagUtils.validateIfMatch(etag, equipmentType.getEtag());
 
         String name = request.name().trim();
         if (!equipmentType.getName().equals(name)
@@ -124,15 +126,16 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
         equipmentType.setManufacturer(request.manufacturer().trim());
         equipmentType.setMaintenanceIntervalDays(request.maintenanceIntervalDays());
 
-        return equipmentMapper.toTypeResponse(equipmentTypeRepository.save(equipmentType));
+        return equipmentMapper.toTypeResponse(equipmentTypeRepository.saveAndFlush(equipmentType));
     }
     @Override
     @Transactional
-    public void delete(String id) {
+    public void delete(String id, String etag) {
         UUID equipmentTypeId = validateAndMapId(id, "Id");
 
         EquipmentType equipmentType = equipmentTypeRepository.findById(equipmentTypeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment type", equipmentTypeId));
+        EtagUtils.validateIfMatch(etag, equipmentType.getEtag());
         equipmentTypeRepository.delete(equipmentType);
     }
 

@@ -40,6 +40,9 @@ public class KsuidVersionType implements UserType<KsuidVersion>, UserVersionType
     @Override
     public KsuidVersion nullSafeGet(ResultSet rs, int index, SharedSessionContractImplementor sharedSessionContractImplementor, Object o) throws SQLException {
         String val = rs.getString(index);
+        if (val == null) {
+            throw new SQLException("ETag must not be null");
+        }
         return new KsuidVersion(val);
     }
 

@@ -34,6 +34,9 @@ public class BaseEntity {
         LocalDate now = LocalDate.now();
         createdAt = now;
         updatedAt = now;
+        if (etag == null) {
+            etag = new KsuidVersion();
+        }
     }
 
     @PreUpdate

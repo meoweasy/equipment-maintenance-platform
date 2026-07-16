@@ -18,9 +18,9 @@ public interface EquipmentService {
 
     EquipmentResponse getById(String id);
 
-    EquipmentResponse update(String id, EquipmentCreateRequest request);
+    EquipmentResponse update(String id, String etag, EquipmentCreateRequest request);
 
-    void delete(String id);
+    void delete(String id, String etag);
 
-    EquipmentResponse changeStatus(String id, String status);
+    EquipmentResponse changeStatus(String id, String etag, String status);
 }

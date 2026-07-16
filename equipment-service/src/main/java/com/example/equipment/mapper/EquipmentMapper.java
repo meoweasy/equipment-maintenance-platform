@@ -4,6 +4,7 @@ import com.example.equipment.dto.EquipmentResponse;
 import com.example.equipment.dto.EquipmentTypeResponse;
 import com.example.equipment.entity.Equipment;
 import com.example.equipment.entity.EquipmentType;
+import com.example.equipment.utils.EtagUtils;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,7 +20,7 @@ public class EquipmentMapper {
                 equipment.getStatus(),
                 equipment.getCreatedAt(),
                 equipment.getDecommissionedAt(),
-                equipment.getEtag()
+                EtagUtils.value(equipment.getEtag())
         );
     }
 
@@ -32,7 +33,7 @@ public class EquipmentMapper {
                 equipmentType.getMaintenanceIntervalDays(),
                 equipmentType.getCreatedAt(),
                 equipmentType.getUpdatedAt(),
-                equipmentType.getEtag()
+                EtagUtils.value(equipmentType.getEtag())
         );
     }
 }

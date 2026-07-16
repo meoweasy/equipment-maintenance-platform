@@ -4,9 +4,9 @@ import com.example.equipment.dto.EquipmentCreateRequest;
 import com.example.equipment.dto.EquipmentListFilter;
 import com.example.equipment.dto.EquipmentResponse;
 import com.example.equipment.dto.PageDto;
-import com.example.equipment.enums.EquipmentStatus;
 import com.example.equipment.services.EquipmentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -29,7 +29,7 @@ public class EquipmentController {
                 .path("/{id}")
                 .buildAndExpand(response.id())
                 .toUri();
-        return ResponseEntity.created(location).body(response);
+        return ResponseEntity.created(location).eTag(response.etag()).body(response);
     }
 
     @GetMapping(API_PATH)
@@ -43,33 +43,42 @@ public class EquipmentController {
 
     @GetMapping(API_PATH + "/{id}")
     public ResponseEntity<EquipmentResponse> getById(@PathVariable String id) {
-        return ResponseEntity.ok(equipmentService.getById(id));
+        return withEtag(equipmentService.getById(id));
     }
 
     @PutMapping(API_PATH + "/{id}")
     public ResponseEntity<EquipmentResponse> update(
             @PathVariable String id,
+            @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String etag,
             @RequestBody EquipmentCreateRequest request
     ) {
-        return ResponseEntity.ok(equipmentService.update(id, request));
+        return withEtag(equipmentService.update(id, etag, request));
     }
 
     @DeleteMapping(API_PATH + "/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
-        equipmentService.delete(id);
+    public ResponseEntity<Void> delete(
+            @PathVariable String id,
+            @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String etag
+    ) {
+        equipmentService.delete(id, etag);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping(INTERNAL_PATH + "/{id}")
     public ResponseEntity<EquipmentResponse> getInternalById(@PathVariable String id) {
-        return ResponseEntity.ok(equipmentService.getById(id));
+        return withEtag(equipmentService.getById(id));
     }
 
     @PatchMapping(INTERNAL_PATH + "/{id}/status")
     public ResponseEntity<EquipmentResponse> changeStatus(
             @PathVariable String id,
+            @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String etag,
             @RequestParam String status
     ) {
-        return ResponseEntity.ok(equipmentService.changeStatus(id, status));
+        return withEtag(equipmentService.changeStatus(id, etag, status));
+    }
+
+    private ResponseEntity<EquipmentResponse> withEtag(EquipmentResponse response) {
+        return ResponseEntity.ok().eTag(response.etag()).body(response);
     }
 }

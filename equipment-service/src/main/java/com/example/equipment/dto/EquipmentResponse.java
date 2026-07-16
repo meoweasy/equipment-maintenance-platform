@@ -1,8 +1,6 @@
 package com.example.equipment.dto;
 
 import com.example.equipment.enums.EquipmentStatus;
-import com.example.equipment.utils.ksuuid.KsuidVersion;
-
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -15,6 +13,6 @@ public record EquipmentResponse(
         EquipmentStatus status,
         LocalDate createdAt,
         LocalDate decommissionedAt,
-        KsuidVersion etag
+        String etag
 ) {
 }

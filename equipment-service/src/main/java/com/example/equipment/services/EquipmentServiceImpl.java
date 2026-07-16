@@ -18,6 +18,7 @@ import com.example.equipment.exception.StatusChangeNotAllowedException;
 import com.example.equipment.exception.ValueTooLargeException;
 import com.example.equipment.exception.ValueTooSmallException;
 import com.example.equipment.repository.EquipmentRepository;
+import com.example.equipment.utils.EtagUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -62,7 +63,7 @@ public class EquipmentServiceImpl implements EquipmentService {
                 equipmentType
         );
 
-        Equipment savedEquipment = equipmentRepository.save(equipment);
+        Equipment savedEquipment = equipmentRepository.saveAndFlush(equipment);
         return equipmentMapper.toResponse(savedEquipment);
     }
 
@@ -111,12 +112,13 @@ public class EquipmentServiceImpl implements EquipmentService {
 
     @Override
     @Transactional
-    public EquipmentResponse update(String id, EquipmentCreateRequest request) {
+    public EquipmentResponse update(String id, String etag, EquipmentCreateRequest request) {
         UUID equipmentId = validateAndMapId(id, "Id");
         validateCreate(request);
 
         Equipment equipment = equipmentRepository.findById(equipmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment", equipmentId));
+        EtagUtils.validateIfMatch(etag, equipment.getEtag());
 
         if (equipment.getInventoryNumber() != request.inventoryNumber()
                 && equipmentRepository.existsByInventoryNumber(request.inventoryNumber())) {
@@ -132,20 +134,21 @@ public class EquipmentServiceImpl implements EquipmentService {
         equipment.setLocation(request.location().trim());
         equipment.setEquipmentType(equipmentType);
 
-        return equipmentMapper.toResponse(equipmentRepository.save(equipment));
+        return equipmentMapper.toResponse(equipmentRepository.saveAndFlush(equipment));
     }
     @Override
     @Transactional
-    public void delete(String id) {
+    public void delete(String id, String etag) {
         UUID equipmentId = validateAndMapId(id, "Id");
         Equipment equipment = equipmentRepository.findById(equipmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment", equipmentId));
+        EtagUtils.validateIfMatch(etag, equipment.getEtag());
         equipmentRepository.delete(equipment);
     }
 
     @Override
     @Transactional
-    public EquipmentResponse changeStatus(String id, String status) {
+    public EquipmentResponse changeStatus(String id, String etag, String status) {
         UUID equipmentId = validateAndMapId(id, "Id");
         if (status == null || status.isBlank()) {
             throw new RequiredFieldException("Status");
@@ -160,6 +163,7 @@ public class EquipmentServiceImpl implements EquipmentService {
 
         Equipment equipment = equipmentRepository.findById(equipmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment", equipmentId));
+        EtagUtils.validateIfMatch(etag, equipment.getEtag());
 
         if (equipment.getStatus() == EquipmentStatus.UNDER_MAINTENANCE
                 && equipmentStatus == EquipmentStatus.DECOMMISSIONED) {
@@ -171,7 +175,7 @@ public class EquipmentServiceImpl implements EquipmentService {
                 equipmentStatus == EquipmentStatus.DECOMMISSIONED ? LocalDate.now() : null
         );
 
-        return equipmentMapper.toResponse(equipmentRepository.save(equipment));
+        return equipmentMapper.toResponse(equipmentRepository.saveAndFlush(equipment));
     }
 
     private void validateList(Integer pageSize, Integer pageNumber) {

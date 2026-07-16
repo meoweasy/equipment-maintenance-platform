@@ -1,6 +1,7 @@
 package com.example.equipment.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -24,6 +25,20 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
     }
 
+    @ExceptionHandler(EtagRequiredException.class)
+    public ResponseEntity<ApiErrorResponse> handlePreconditionRequired(EtagRequiredException exception,
+                                                                       HttpServletRequest request) {
+        return build(HttpStatus.PRECONDITION_REQUIRED, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler({EtagMismatchException.class, OptimisticLockingFailureException.class})
+    public ResponseEntity<ApiErrorResponse> handlePreconditionFailed(RuntimeException exception,
+                                                                     HttpServletRequest request) {
+        String message = exception instanceof EtagMismatchException
+                ? exception.getMessage()
+                : "Resource was changed by another request";
+        return build(HttpStatus.PRECONDITION_FAILED, message, request);
+    }
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleNotFound(ResourceNotFoundException exception,
                                                            HttpServletRequest request) {
