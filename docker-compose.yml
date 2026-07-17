@@ -1,8 +1,22 @@
 services:
+  gateway:
+    image: nginx:1.27-alpine
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./gateway/proxy_params:/etc/nginx/proxy_params:ro
+    depends_on:
+      equipment-service:
+        condition: service_started
+      maintenance-service:
+        condition: service_started
+    networks:
+      - public
+      - service-internal
+
   equipment-db:
     image: postgres:16-alpine
-    ports:
-      - "5433:5432"
     environment:
       POSTGRES_DB: equipment_db
       POSTGRES_USER: equipment
@@ -14,11 +28,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - equipment-data
 
   maintenance-db:
     image: postgres:16-alpine
-    ports:
-      - "5434:5432"
     environment:
       POSTGRES_DB: maintenance_db
       POSTGRES_USER: maintenance
@@ -30,27 +44,33 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - maintenance-data
 
   equipment-service:
     build:
       context: .
       dockerfile: equipment-service/Dockerfile
-    ports:
-      - "8081:8081"
+    expose:
+      - "8081"
     environment:
       DB_URL: jdbc:postgresql://equipment-db:5432/equipment_db
       DB_USERNAME: equipment
       DB_PASSWORD: equipment
+      MAINTENANCE_SERVICE_URL: http://maintenance-service:8082
     depends_on:
       equipment-db:
         condition: service_healthy
+    networks:
+      - service-internal
+      - equipment-data
 
   maintenance-service:
     build:
       context: .
       dockerfile: maintenance-service/Dockerfile
-    ports:
-      - "8082:8082"
+    expose:
+      - "8082"
     environment:
       EQUIPMENT_SERVICE_URL: http://equipment-service:8081
       DB_URL: jdbc:postgresql://maintenance-db:5432/maintenance_db
@@ -61,6 +81,18 @@ services:
         condition: service_started
       maintenance-db:
         condition: service_healthy
+    networks:
+      - service-internal
+      - maintenance-data
+
+networks:
+  public:
+  service-internal:
+    internal: true
+  equipment-data:
+    internal: true
+  maintenance-data:
+    internal: true
 
 volumes:
   equipment-db-data:

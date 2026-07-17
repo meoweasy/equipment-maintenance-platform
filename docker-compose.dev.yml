@@ -1,0 +1,16 @@
+services:
+  equipment-db:
+    ports:
+      - "127.0.0.1:5433:5432"
+
+  maintenance-db:
+    ports:
+      - "127.0.0.1:5434:5432"
+
+  equipment-service:
+    ports:
+      - "127.0.0.1:8081:8081"
+
+  maintenance-service:
+    ports:
+      - "127.0.0.1:8082:8082"
