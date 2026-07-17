@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public record ServiceRequestResponse(
+        UUID id,
         EquipmentResponse equipment,
         String title,
         String description,

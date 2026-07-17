@@ -22,4 +22,6 @@ public interface ServiceRequestService {
     void delete(UUID id);
 
     ServiceRequestResponse changeStatus(UUID id, ServiceRequestStatus status);
+
+    boolean hasActiveRequest(UUID equipmentId);
 }

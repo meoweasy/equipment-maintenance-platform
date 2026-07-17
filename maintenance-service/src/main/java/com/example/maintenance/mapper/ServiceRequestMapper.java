@@ -13,6 +13,7 @@ public class ServiceRequestMapper {
             EquipmentResponse equipment
     ) {
         return new ServiceRequestResponse(
+                serviceRequest.getId(),
                 equipment,
                 serviceRequest.getTitle(),
                 serviceRequest.getDescription(),

@@ -168,4 +168,12 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
                 equipmentClient.getCached(savedServiceRequest.getEquipmentId())
         );
     }
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasActiveRequest(UUID equipmentId) {
+        return serviceRequestRepository.existsByEquipmentIdAndStatusIn(
+                equipmentId,
+                java.util.List.of(ServiceRequestStatus.NEW, ServiceRequestStatus.IN_PROGRESS)
+        );
+    }
 }
