@@ -1,7 +1,6 @@
 package com.example.platform.common.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Instant;
@@ -69,13 +69,15 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, message, request);
     }
 
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiErrorResponse> handleConstraintViolation(
-            ConstraintViolationException exception,
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ApiErrorResponse> handleMethodValidation(
+            HandlerMethodValidationException exception,
             HttpServletRequest request
     ) {
-        String message = exception.getConstraintViolations().stream()
-                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+        String message = exception.getParameterValidationResults().stream()
+                .flatMap(result -> result.getResolvableErrors().stream()
+                        .map(error -> result.getMethodParameter().getParameterName()
+                                + ": " + error.getDefaultMessage()))
                 .collect(Collectors.joining(", "));
         return build(HttpStatus.BAD_REQUEST, message, request);
     }

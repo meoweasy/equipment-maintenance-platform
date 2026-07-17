@@ -8,8 +8,6 @@ import com.example.equipment.repository.EquipmentTypeRepository;
 import com.example.platform.common.etag.EtagUtils;
 import com.example.platform.common.exception.ResourceAlreadyExistsException;
 import com.example.platform.common.exception.ResourceNotFoundException;
-import com.example.platform.common.exception.ValueTooLargeException;
-import com.example.platform.common.exception.ValueTooSmallException;
 import com.example.platform.common.pagination.PageDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -62,7 +60,6 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
             Integer pageSize,
             Integer pageNumber
     ) {
-        validateList(pageSize, pageNumber);
 
         pageNumber = pageNumber == null ? DEFAULT_PAGE_NUMBER : pageNumber;
         pageSize = pageSize == null ? DEFAULT_PAGE_SIZE : pageSize;
@@ -116,18 +113,6 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment type", id));
         EtagUtils.validateIfMatch(etag, equipmentType.getEtag());
         equipmentTypeRepository.delete(equipmentType);
-    }
-
-    private void validateList(Integer pageSize, Integer pageNumber) {
-        if (pageNumber != null && pageNumber < 0) {
-            throw new ValueTooSmallException("Page number", 0);
-        }
-        if (pageSize != null && pageSize < MIN_PAGE_SIZE) {
-            throw new ValueTooSmallException("Page size", MIN_PAGE_SIZE);
-        }
-        if (pageSize != null && pageSize > MAX_PAGE_SIZE) {
-            throw new ValueTooLargeException("Page size", MAX_PAGE_SIZE);
-        }
     }
 
 }

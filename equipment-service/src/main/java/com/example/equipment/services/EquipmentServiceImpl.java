@@ -64,7 +64,6 @@ public class EquipmentServiceImpl implements EquipmentService {
         EquipmentListFilter actualFilter = filter == null
                 ? new EquipmentListFilter(null)
                 : filter;
-        validateList(pageSize, pageNumber);
 
         pageNumber = pageNumber == null ? DEFAULT_PAGE_NUMBER : pageNumber;
         pageSize = pageSize == null ? DEFAULT_PAGE_SIZE : pageSize;
@@ -146,17 +145,5 @@ public class EquipmentServiceImpl implements EquipmentService {
         );
 
         return equipmentMapper.toResponse(equipmentRepository.saveAndFlush(equipment));
-    }
-
-    private void validateList(Integer pageSize, Integer pageNumber) {
-        if (pageNumber != null && pageNumber < 0) {
-            throw new ValueTooSmallException("Page number", 0);
-        }
-        if (pageSize != null && pageSize < MIN_PAGE_SIZE) {
-            throw new ValueTooSmallException("Page size", MIN_PAGE_SIZE);
-        }
-        if (pageSize != null && pageSize > MAX_PAGE_SIZE) {
-            throw new ValueTooLargeException("Page size", MAX_PAGE_SIZE);
-        }
     }
 }

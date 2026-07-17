@@ -11,8 +11,6 @@ import com.example.maintenance.mapper.ServiceRequestMapper;
 import com.example.maintenance.repository.ServiceRequestRepository;
 import com.example.platform.common.exception.PreconditionFailedException;
 import com.example.platform.common.exception.ResourceNotFoundException;
-import com.example.platform.common.exception.ValueTooLargeException;
-import com.example.platform.common.exception.ValueTooSmallException;
 import com.example.platform.common.pagination.PageDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -65,7 +63,6 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
             Integer pageSize,
             Integer pageNumber
     ) {
-        validatePagination(pageSize, pageNumber);
         ServiceRequestListFilter effectiveFilter = filter == null
                 ? new ServiceRequestListFilter(null, null, null)
                 : filter;
@@ -170,17 +167,5 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
                 savedServiceRequest,
                 equipmentClient.getCached(savedServiceRequest.getEquipmentId())
         );
-    }
-
-    private void validatePagination(Integer pageSize, Integer pageNumber) {
-        if (pageNumber != null && pageNumber < DEFAULT_PAGE_NUMBER) {
-            throw new ValueTooSmallException("Page number", DEFAULT_PAGE_NUMBER);
-        }
-        if (pageSize != null && pageSize < MIN_PAGE_SIZE) {
-            throw new ValueTooSmallException("Page size", MIN_PAGE_SIZE);
-        }
-        if (pageSize != null && pageSize > MAX_PAGE_SIZE) {
-            throw new ValueTooLargeException("Page size", MAX_PAGE_SIZE);
-        }
     }
 }
