@@ -29,7 +29,7 @@ import static com.example.platform.common.pagination.PaginationConstants.MIN_PAG
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "Equipment", description = "Equipment lifecycle, search and status management")
+@Tag(name = "Оборудование", description = "Управление оборудованием, поиск и изменение статусов")
 public class EquipmentController {
 
     private static final String API_PATH = "${application.api-path}/equipment";
@@ -37,8 +37,8 @@ public class EquipmentController {
 
     private final EquipmentService equipmentService;
 
-    @Operation(summary = "Create equipment", description = "Creates equipment in ACTIVE status. The equipment type must exist and the inventory number must be unique.")
-    @ApiResponses({@ApiResponse(responseCode = "201", description = "Equipment created"), @ApiResponse(responseCode = "400", description = "Invalid request"), @ApiResponse(responseCode = "404", description = "Equipment type not found"), @ApiResponse(responseCode = "409", description = "Inventory number already exists")})
+    @Operation(summary = "Создать оборудование", description = "Создаёт оборудование в статусе AVAILABLE. Тип должен существовать, инвентарный номер должен быть уникальным.")
+    @ApiResponses({@ApiResponse(responseCode = "201", description = "Оборудование создано"), @ApiResponse(responseCode = "400", description = "Некорректный запрос"), @ApiResponse(responseCode = "404", description = "Тип оборудования не найден"), @ApiResponse(responseCode = "409", description = "Инвентарный номер уже существует")})
     @PostMapping(API_PATH)
     public ResponseEntity<EquipmentResponse> create(@Valid @RequestBody EquipmentCreateRequest request) {
         EquipmentResponse response = equipmentService.create(request);
@@ -49,7 +49,7 @@ public class EquipmentController {
         return ResponseEntity.created(location).eTag(response.etag()).body(response);
     }
 
-    @Operation(summary = "List equipment", description = "Returns a paginated list. Optional filters can be combined.")
+    @Operation(summary = "Получить список оборудования", description = "Возвращает страницу оборудования. Фильтры можно комбинировать.")
     @GetMapping(API_PATH)
     public ResponseEntity<PageDto<EquipmentResponse>> list(
             @RequestParam(required = false)
@@ -64,14 +64,14 @@ public class EquipmentController {
         return ResponseEntity.ok(equipmentService.list(filter, pageSize, pageNumber));
     }
 
-    @Operation(summary = "Get equipment", description = "Returns equipment and its current ETag response header.")
+    @Operation(summary = "Получить оборудование", description = "Возвращает оборудование и актуальный ETag в заголовке ответа.")
     @GetMapping(API_PATH + "/{id}")
     public ResponseEntity<EquipmentResponse> getById(@PathVariable UUID id) {
         return withEtag(equipmentService.getById(id));
     }
 
-    @Operation(summary = "Replace equipment", description = "Fully replaces editable data. Send the latest ETag in If-Match to prevent lost updates.")
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "Equipment updated"), @ApiResponse(responseCode = "412", description = "ETag is stale"), @ApiResponse(responseCode = "428", description = "If-Match is required")})
+    @Operation(summary = "Изменить оборудование", description = "Полностью заменяет данные. Передайте актуальный ETag в If-Match.")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Оборудование изменено"), @ApiResponse(responseCode = "412", description = "ETag устарел"), @ApiResponse(responseCode = "428", description = "Заголовок If-Match обязателен")})
     @PutMapping(API_PATH + "/{id}")
     public ResponseEntity<EquipmentResponse> update(
             @PathVariable UUID id,
@@ -81,8 +81,8 @@ public class EquipmentController {
         return withEtag(equipmentService.update(id, etag, request));
     }
 
-    @Operation(summary = "Delete equipment", description = "Allowed only when no active service requests exist. Requires the latest ETag.")
-    @ApiResponses({@ApiResponse(responseCode = "204", description = "Equipment deleted"), @ApiResponse(responseCode = "412", description = "Stale ETag or active requests exist"), @ApiResponse(responseCode = "428", description = "If-Match is required")})
+    @Operation(summary = "Удалить оборудование", description = "Разрешено только при отсутствии активных заявок. Требуется актуальный ETag.")
+    @ApiResponses({@ApiResponse(responseCode = "204", description = "Оборудование удалено"), @ApiResponse(responseCode = "412", description = "ETag устарел или существуют активные заявки"), @ApiResponse(responseCode = "428", description = "Заголовок If-Match обязателен")})
     @DeleteMapping(API_PATH + "/{id}")
     public ResponseEntity<Void> delete(
             @PathVariable UUID id,
@@ -92,13 +92,13 @@ public class EquipmentController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Get equipment for maintenance-service", description = "Internal validation and enrichment endpoint", tags = "Internal equipment API")
+    @Operation(summary = "Получить оборудование for maintenance-service", description = "Внутренний метод проверки оборудования и наполнения ответа", tags = "Внутреннее API оборудования")
     @GetMapping(INTERNAL_PATH + "/{id}")
     public ResponseEntity<EquipmentResponse> getInternalById(@PathVariable UUID id) {
         return withEtag(equipmentService.getById(id));
     }
 
-    @Operation(summary = "Change equipment status", description = "Internal lifecycle operation. Equipment under maintenance cannot be decommissioned.", tags = "Internal equipment API")
+    @Operation(summary = "Изменить статус оборудования", description = "Внутренняя операция. Оборудование на обслуживании нельзя списать.", tags = "Внутреннее API оборудования")
     @PatchMapping(INTERNAL_PATH + "/{id}/status")
     public ResponseEntity<EquipmentResponse> changeStatus(
             @PathVariable UUID id,

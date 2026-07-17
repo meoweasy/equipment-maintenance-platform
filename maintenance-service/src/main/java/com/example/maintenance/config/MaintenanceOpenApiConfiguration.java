@@ -5,9 +5,12 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.servers.Server;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
 
 @Configuration
 public class MaintenanceOpenApiConfiguration {
@@ -15,15 +18,15 @@ public class MaintenanceOpenApiConfiguration {
     @Bean
     public OpenAPI maintenanceOpenApi() {
         return new OpenAPI()
+                .servers(List.of(new Server().url("/").description("API Gateway")))
                 .info(new Info()
-                        .title("Maintenance Service API")
+                        .title("API сервиса заявок")
                         .version("1.0.0")
-                        .description("Manages equipment service requests, filtering and status transitions. "
-                                + "A request is created in NEW status; DONE requests are immutable.")
-                        .contact(new Contact().name("Equipment Maintenance Platform"))
-                        .license(new License().name("Internal project")))
+                        .description("Управление заявками, фильтрацией и изменением статусов. Заявка DONE доступна только для чтения.")
+                        .contact(new Contact().name("Платформа обслуживания оборудования"))
+                        .license(new License().name("Учебный проект")))
                 .externalDocs(new ExternalDocumentation()
-                        .description("OpenAPI JSON")
+                        .description("Спецификация OpenAPI в JSON")
                         .url("/v3/api-docs"));
     }
 
@@ -31,7 +34,7 @@ public class MaintenanceOpenApiConfiguration {
     public GroupedOpenApi maintenancePublicApi() {
         return GroupedOpenApi.builder()
                 .group("public")
-                .displayName("Public Maintenance API")
+                .displayName("Публичное API заявок")
                 .pathsToMatch("/api/**")
                 .build();
     }
@@ -40,7 +43,7 @@ public class MaintenanceOpenApiConfiguration {
     public GroupedOpenApi maintenanceInternalApi() {
         return GroupedOpenApi.builder()
                 .group("internal")
-                .displayName("Internal Maintenance API")
+                .displayName("Внутреннее API заявок")
                 .pathsToMatch("/internal/**")
                 .build();
     }

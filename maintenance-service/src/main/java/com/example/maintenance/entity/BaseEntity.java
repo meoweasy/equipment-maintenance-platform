@@ -2,7 +2,7 @@ package com.example.maintenance.entity;
 
 import com.example.platform.common.etag.KsuidVersion;
 import com.example.platform.common.etag.KsuidVersionType;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
+import org.hibernate.annotations.Type;
 import jakarta.persistence.*;
 import lombok.Getter;
 
@@ -25,8 +25,8 @@ public class BaseEntity {
     private LocalDate updatedAt;
 
     @Version
-    @JsonSubTypes.Type(KsuidVersionType.class)
-    @Column(name = "etag")
+    @Type(KsuidVersionType.class)
+    @Column(name = "etag", nullable = false)
     private KsuidVersion etag;
 
     @PrePersist

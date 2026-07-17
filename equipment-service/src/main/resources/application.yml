@@ -6,6 +6,7 @@ spring:
     username: ${DB_USERNAME:equipment}
     password: ${DB_PASSWORD:equipment}
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: validate
   liquibase:
@@ -13,6 +14,7 @@ spring:
 
 server:
   port: 8081
+  forward-headers-strategy: framework
 
 application:
   api-path: /api
@@ -40,5 +42,6 @@ springdoc:
     display-request-duration: true
     try-it-out-enabled: true
     filter: true
+    urls-primary-name: "Публичное API оборудования"
   api-docs:
     path: /v3/api-docs

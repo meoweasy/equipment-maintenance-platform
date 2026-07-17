@@ -5,9 +5,12 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.servers.Server;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
 
 @Configuration
 public class EquipmentOpenApiConfiguration {
@@ -15,15 +18,15 @@ public class EquipmentOpenApiConfiguration {
     @Bean
     public OpenAPI equipmentOpenApi() {
         return new OpenAPI()
+                .servers(List.of(new Server().url("/").description("API Gateway")))
                 .info(new Info()
-                        .title("Equipment Service API")
+                        .title("API сервиса оборудования")
                         .version("1.0.0")
-                        .description("Manages equipment and equipment types. "
-                                + "Update and delete operations use If-Match with the ETag returned by read operations.")
-                        .contact(new Contact().name("Equipment Maintenance Platform"))
-                        .license(new License().name("Internal project")))
+                        .description("Управление оборудованием и типами оборудования. Для изменения и удаления передавайте актуальный ETag в If-Match.")
+                        .contact(new Contact().name("Платформа обслуживания оборудования"))
+                        .license(new License().name("Учебный проект")))
                 .externalDocs(new ExternalDocumentation()
-                        .description("OpenAPI JSON")
+                        .description("Спецификация OpenAPI в JSON")
                         .url("/v3/api-docs"));
     }
 
@@ -31,7 +34,7 @@ public class EquipmentOpenApiConfiguration {
     public GroupedOpenApi equipmentPublicApi() {
         return GroupedOpenApi.builder()
                 .group("public")
-                .displayName("Public Equipment API")
+                .displayName("Публичное API оборудования")
                 .pathsToMatch("/api/**")
                 .build();
     }
@@ -40,7 +43,7 @@ public class EquipmentOpenApiConfiguration {
     public GroupedOpenApi equipmentInternalApi() {
         return GroupedOpenApi.builder()
                 .group("internal")
-                .displayName("Internal Equipment API")
+                .displayName("Внутреннее API оборудования")
                 .pathsToMatch("/internal/**")
                 .build();
     }
