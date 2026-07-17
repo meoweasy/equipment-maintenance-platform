@@ -32,3 +32,13 @@ services:
   maintenance:
     base-url: ${MAINTENANCE_SERVICE_URL:http://localhost:8082}
     cache-ttl: ${MAINTENANCE_CACHE_TTL:5s}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    try-it-out-enabled: true
+    filter: true
+  api-docs:
+    path: /v3/api-docs

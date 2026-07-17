@@ -6,6 +6,11 @@ import com.example.equipment.dto.EquipmentResponse;
 import com.example.equipment.enums.EquipmentStatus;
 import com.example.equipment.services.EquipmentService;
 import com.example.platform.common.pagination.PageDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -24,6 +29,7 @@ import static com.example.platform.common.pagination.PaginationConstants.MIN_PAG
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Equipment", description = "Equipment lifecycle, search and status management")
 public class EquipmentController {
 
     private static final String API_PATH = "${application.api-path}/equipment";
@@ -31,6 +37,8 @@ public class EquipmentController {
 
     private final EquipmentService equipmentService;
 
+    @Operation(summary = "Create equipment", description = "Creates equipment in ACTIVE status. The equipment type must exist and the inventory number must be unique.")
+    @ApiResponses({@ApiResponse(responseCode = "201", description = "Equipment created"), @ApiResponse(responseCode = "400", description = "Invalid request"), @ApiResponse(responseCode = "404", description = "Equipment type not found"), @ApiResponse(responseCode = "409", description = "Inventory number already exists")})
     @PostMapping(API_PATH)
     public ResponseEntity<EquipmentResponse> create(@Valid @RequestBody EquipmentCreateRequest request) {
         EquipmentResponse response = equipmentService.create(request);
@@ -41,6 +49,7 @@ public class EquipmentController {
         return ResponseEntity.created(location).eTag(response.etag()).body(response);
     }
 
+    @Operation(summary = "List equipment", description = "Returns a paginated list. Optional filters can be combined.")
     @GetMapping(API_PATH)
     public ResponseEntity<PageDto<EquipmentResponse>> list(
             @RequestParam(required = false)
@@ -55,11 +64,14 @@ public class EquipmentController {
         return ResponseEntity.ok(equipmentService.list(filter, pageSize, pageNumber));
     }
 
+    @Operation(summary = "Get equipment", description = "Returns equipment and its current ETag response header.")
     @GetMapping(API_PATH + "/{id}")
     public ResponseEntity<EquipmentResponse> getById(@PathVariable UUID id) {
         return withEtag(equipmentService.getById(id));
     }
 
+    @Operation(summary = "Replace equipment", description = "Fully replaces editable data. Send the latest ETag in If-Match to prevent lost updates.")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Equipment updated"), @ApiResponse(responseCode = "412", description = "ETag is stale"), @ApiResponse(responseCode = "428", description = "If-Match is required")})
     @PutMapping(API_PATH + "/{id}")
     public ResponseEntity<EquipmentResponse> update(
             @PathVariable UUID id,
@@ -69,6 +81,8 @@ public class EquipmentController {
         return withEtag(equipmentService.update(id, etag, request));
     }
 
+    @Operation(summary = "Delete equipment", description = "Allowed only when no active service requests exist. Requires the latest ETag.")
+    @ApiResponses({@ApiResponse(responseCode = "204", description = "Equipment deleted"), @ApiResponse(responseCode = "412", description = "Stale ETag or active requests exist"), @ApiResponse(responseCode = "428", description = "If-Match is required")})
     @DeleteMapping(API_PATH + "/{id}")
     public ResponseEntity<Void> delete(
             @PathVariable UUID id,
@@ -78,11 +92,13 @@ public class EquipmentController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Get equipment for maintenance-service", description = "Internal validation and enrichment endpoint", tags = "Internal equipment API")
     @GetMapping(INTERNAL_PATH + "/{id}")
     public ResponseEntity<EquipmentResponse> getInternalById(@PathVariable UUID id) {
         return withEtag(equipmentService.getById(id));
     }
 
+    @Operation(summary = "Change equipment status", description = "Internal lifecycle operation. Equipment under maintenance cannot be decommissioned.", tags = "Internal equipment API")
     @PatchMapping(INTERNAL_PATH + "/{id}/status")
     public ResponseEntity<EquipmentResponse> changeStatus(
             @PathVariable UUID id,

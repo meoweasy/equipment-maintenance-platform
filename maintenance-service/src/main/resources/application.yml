@@ -24,3 +24,13 @@ services:
   equipment:
     base-url: ${EQUIPMENT_SERVICE_URL:http://localhost:8081}
     cache-ttl: ${EQUIPMENT_CACHE_TTL:30s}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    try-it-out-enabled: true
+    filter: true
+  api-docs:
+    path: /v3/api-docs

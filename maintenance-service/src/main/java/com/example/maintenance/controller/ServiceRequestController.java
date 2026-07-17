@@ -7,6 +7,11 @@ import com.example.maintenance.dto.ServiceRequestResponse;
 import com.example.maintenance.enums.ServiceRequestStatus;
 import com.example.maintenance.services.ServiceRequestService;
 import com.example.platform.common.pagination.PageDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -33,6 +38,7 @@ import static com.example.platform.common.pagination.PaginationConstants.MIN_PAG
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Service requests", description = "Maintenance requests and their lifecycle")
 public class ServiceRequestController {
 
     private static final String API_PATH = "${application.api-path}/service-requests";
@@ -40,6 +46,7 @@ public class ServiceRequestController {
 
     private final ServiceRequestService serviceRequestService;
 
+    @Operation(summary = "Create a service request", description = "Creates it in NEW status. Equipment must exist and must not be DECOMMISSIONED.")
     @PostMapping(API_PATH)
     public ResponseEntity<ServiceRequestResponse> create(
             @Valid @RequestBody ServiceRequestCreateRequest request
@@ -52,6 +59,7 @@ public class ServiceRequestController {
         return ResponseEntity.created(location).body(response);
     }
 
+    @Operation(summary = "List service requests", description = "Optional status, priority and equipmentId filters can be combined.")
     @GetMapping(API_PATH)
     public ResponseEntity<PageDto<ServiceRequestResponse>> list(
             @RequestParam(required = false)
@@ -66,11 +74,13 @@ public class ServiceRequestController {
         return ResponseEntity.ok(serviceRequestService.list(filter, pageSize, pageNumber));
     }
 
+    @Operation(summary = "Get a service request")
     @GetMapping(API_PATH + "/{id}")
     public ResponseEntity<ServiceRequestResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(serviceRequestService.getById(id));
     }
 
+    @Operation(summary = "Replace a service request", description = "A request in DONE status is read-only.")
     @PutMapping(API_PATH + "/{id}")
     public ResponseEntity<ServiceRequestResponse> update(
             @PathVariable UUID id,
@@ -79,12 +89,14 @@ public class ServiceRequestController {
         return ResponseEntity.ok(serviceRequestService.update(id, request));
     }
 
+    @Operation(summary = "Delete a service request", description = "IN_PROGRESS and DONE requests cannot be deleted.")
     @DeleteMapping(API_PATH + "/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         serviceRequestService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Change request status", description = "DONE sets completedAt automatically. DONE and CANCELLED cannot return to IN_PROGRESS.")
     @PatchMapping(API_PATH + "/{id}/status")
     public ResponseEntity<ServiceRequestResponse> changeStatus(
             @PathVariable UUID id,
@@ -93,6 +105,7 @@ public class ServiceRequestController {
         return ResponseEntity.ok(serviceRequestService.changeStatus(id, status));
     }
 
+    @Operation(summary = "Check for active requests", description = "Internal endpoint used before equipment deletion. DONE and CANCELLED are not active.", tags = "Internal service request API")
     @GetMapping(INTERNAL_PATH + "/active")
     public ResponseEntity<ActiveServiceRequestResponse> hasActiveRequest(
             @RequestParam UUID equipmentId

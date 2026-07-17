@@ -4,6 +4,11 @@ import com.example.equipment.dto.EquipmentTypeCreateRequest;
 import com.example.equipment.dto.EquipmentTypeResponse;
 import com.example.equipment.services.EquipmentTypeService;
 import com.example.platform.common.pagination.PageDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -23,10 +28,12 @@ import static com.example.platform.common.pagination.PaginationConstants.MIN_PAG
 @RestController
 @RequestMapping("${application.api-path}/equipment-types")
 @RequiredArgsConstructor
+@Tag(name = "Equipment types", description = "Reference data used to classify equipment")
 public class EquipmentTypeController {
 
     private final EquipmentTypeService equipmentTypeService;
 
+    @Operation(summary = "Create an equipment type", description = "The type name must be unique.")
     @PostMapping
     public ResponseEntity<EquipmentTypeResponse> create(@Valid @RequestBody EquipmentTypeCreateRequest request) {
         EquipmentTypeResponse response = equipmentTypeService.create(request);
@@ -37,6 +44,7 @@ public class EquipmentTypeController {
         return ResponseEntity.created(location).eTag(response.etag()).body(response);
     }
 
+    @Operation(summary = "List equipment types", description = "Returns a zero-based paginated list.")
     @GetMapping
     public ResponseEntity<PageDto<EquipmentTypeResponse>> list(
             @RequestParam(required = false)
@@ -50,11 +58,13 @@ public class EquipmentTypeController {
         return ResponseEntity.ok(equipmentTypeService.list(pageSize, pageNumber));
     }
 
+    @Operation(summary = "Get an equipment type", description = "Returns the type and its current ETag header.")
     @GetMapping("/{id}")
     public ResponseEntity<EquipmentTypeResponse> getById(@PathVariable UUID id) {
         return withEtag(equipmentTypeService.getById(id));
     }
 
+    @Operation(summary = "Replace an equipment type", description = "Requires the latest ETag in If-Match.")
     @PutMapping("/{id}")
     public ResponseEntity<EquipmentTypeResponse> update(
             @PathVariable UUID id,
@@ -64,6 +74,7 @@ public class EquipmentTypeController {
         return withEtag(equipmentTypeService.update(id, etag, request));
     }
 
+    @Operation(summary = "Delete an equipment type", description = "Rejected while equipment references this type. Requires If-Match.")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
             @PathVariable UUID id,
