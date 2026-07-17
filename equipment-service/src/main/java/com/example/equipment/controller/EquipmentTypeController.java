@@ -1,10 +1,9 @@
 package com.example.equipment.controller;
 
 import com.example.equipment.dto.EquipmentTypeCreateRequest;
-import com.example.equipment.dto.EquipmentTypeListFilter;
 import com.example.equipment.dto.EquipmentTypeResponse;
-import com.example.platform.common.pagination.PageDto;
 import com.example.equipment.services.EquipmentTypeService;
+import com.example.platform.common.pagination.PageDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -13,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("${application.api-path}/equipment-types")
@@ -34,20 +34,19 @@ public class EquipmentTypeController {
     @GetMapping
     public ResponseEntity<PageDto<EquipmentTypeResponse>> list(
             @RequestParam(required = false) Integer pageSize,
-            @RequestParam(required = false) Integer pageNumber,
-            @ModelAttribute EquipmentTypeListFilter filter
+            @RequestParam(required = false) Integer pageNumber
     ) {
-        return ResponseEntity.ok(equipmentTypeService.list(filter, pageSize, pageNumber));
+        return ResponseEntity.ok(equipmentTypeService.list(pageSize, pageNumber));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EquipmentTypeResponse> getById(@PathVariable String id) {
+    public ResponseEntity<EquipmentTypeResponse> getById(@PathVariable UUID id) {
         return withEtag(equipmentTypeService.getById(id));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<EquipmentTypeResponse> update(
-            @PathVariable String id,
+            @PathVariable UUID id,
             @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String etag,
             @Valid @RequestBody EquipmentTypeCreateRequest request
     ) {
@@ -56,7 +55,7 @@ public class EquipmentTypeController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
-            @PathVariable String id,
+            @PathVariable UUID id,
             @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String etag
     ) {
         equipmentTypeService.delete(id, etag);

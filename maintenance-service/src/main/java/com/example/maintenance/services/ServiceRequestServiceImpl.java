@@ -6,15 +6,11 @@ import com.example.maintenance.dto.ServiceRequestListFilter;
 import com.example.maintenance.dto.ServiceRequestResponse;
 import com.example.maintenance.dto.ServiceRequestResponse.EquipmentResponse;
 import com.example.maintenance.entity.ServiceRequest;
-import com.example.maintenance.enums.Priority;
 import com.example.maintenance.enums.ServiceRequestStatus;
 import com.example.maintenance.mapper.ServiceRequestMapper;
 import com.example.maintenance.repository.ServiceRequestRepository;
-import com.example.platform.common.exception.InvalidFieldValueException;
-import com.example.platform.common.exception.InvalidIdException;
-import com.example.platform.common.exception.RequiredFieldException;
-import com.example.platform.common.exception.ResourceNotFoundException;
 import com.example.platform.common.exception.PreconditionFailedException;
+import com.example.platform.common.exception.ResourceNotFoundException;
 import com.example.platform.common.exception.ValueTooLargeException;
 import com.example.platform.common.exception.ValueTooSmallException;
 import com.example.platform.common.pagination.PageDto;
@@ -30,10 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import static com.example.platform.common.pagination.PaginationConstants.DEFAULT_PAGE_NUMBER;
-import static com.example.platform.common.pagination.PaginationConstants.DEFAULT_PAGE_SIZE;
-import static com.example.platform.common.pagination.PaginationConstants.MAX_PAGE_SIZE;
-import static com.example.platform.common.pagination.PaginationConstants.MIN_PAGE_SIZE;
+import static com.example.platform.common.pagination.PaginationConstants.*;
 
 @Service
 @RequiredArgsConstructor
@@ -46,9 +39,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     @Override
     @Transactional
     public ServiceRequestResponse create(ServiceRequestCreateRequest request) {
-        UUID equipmentId = validateAndMapId(request.equipmentId(), "EquipmentId");
-        Priority priority = validateAndMapPriority(request.priority());
-        EquipmentResponse equipment = equipmentClient.getFresh(equipmentId);
+        EquipmentResponse equipment = equipmentClient.getFresh(request.equipmentId());
         if ("DECOMMISSIONED".equals(equipment.status())) {
             throw new PreconditionFailedException(
                     "Service request cannot be created for decommissioned equipment"
@@ -56,11 +47,11 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         }
 
         ServiceRequest serviceRequest = new ServiceRequest();
-        serviceRequest.setEquipmentId(equipmentId);
+        serviceRequest.setEquipmentId(request.equipmentId());
         serviceRequest.setTitle(request.title().trim());
         String description = request.description() == null ? null : request.description().trim();
         serviceRequest.setDescription(description == null || description.isEmpty() ? null : description);
-        serviceRequest.setPriority(priority);
+        serviceRequest.setPriority(request.priority());
         serviceRequest.setStatus(ServiceRequestStatus.NEW);
         serviceRequest.setCompletedAt(null);
 
@@ -85,17 +76,14 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         );
 
         Specification<ServiceRequest> specification = (root, query, builder) -> builder.conjunction();
-        if (effectiveFilter.status() != null && !effectiveFilter.status().isBlank()) {
-            ServiceRequestStatus status = validateAndMapStatus(effectiveFilter.status());
-            specification = specification.and((root, query, builder) -> builder.equal(root.get("status"), status));
+        if (effectiveFilter.status() != null) {
+            specification = specification.and((root, query, builder) -> builder.equal(root.get("status"), effectiveFilter.status()));
         }
-        if (effectiveFilter.priority() != null && !effectiveFilter.priority().isBlank()) {
-            Priority priority = validateAndMapPriority(effectiveFilter.priority());
-            specification = specification.and((root, query, builder) -> builder.equal(root.get("priority"), priority));
+        if (effectiveFilter.priority() != null) {
+            specification = specification.and((root, query, builder) -> builder.equal(root.get("priority"), effectiveFilter.priority()));
         }
-        if (effectiveFilter.equipmentId() != null && !effectiveFilter.equipmentId().isBlank()) {
-            UUID equipmentId = validateAndMapId(effectiveFilter.equipmentId(), "EquipmentId");
-            specification = specification.and((root, query, builder) -> builder.equal(root.get("equipmentId"), equipmentId));
+        if (effectiveFilter.equipmentId() != null) {
+            specification = specification.and((root, query, builder) -> builder.equal(root.get("equipmentId"), effectiveFilter.equipmentId()));
         }
 
         Page<ServiceRequest> serviceRequests = serviceRequestRepository.findAll(specification, pageable);
@@ -107,10 +95,9 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
     @Override
     @Transactional(readOnly = true)
-    public ServiceRequestResponse getById(String id) {
-        UUID serviceRequestId = validateAndMapId(id, "Id");
-        ServiceRequest serviceRequest = serviceRequestRepository.findById(serviceRequestId)
-                .orElseThrow(() -> new ResourceNotFoundException("Service request", serviceRequestId));
+    public ServiceRequestResponse getById(UUID id) {
+        ServiceRequest serviceRequest = serviceRequestRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Service request", id));
         return serviceRequestMapper.toResponse(
                 serviceRequest,
                 equipmentClient.getCached(serviceRequest.getEquipmentId())
@@ -119,38 +106,34 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
     @Override
     @Transactional
-    public ServiceRequestResponse update(String id, ServiceRequestCreateRequest request) {
-        UUID serviceRequestId = validateAndMapId(id, "Id");
-        ServiceRequest serviceRequest = serviceRequestRepository.findById(serviceRequestId)
-                .orElseThrow(() -> new ResourceNotFoundException("Service request", serviceRequestId));
+    public ServiceRequestResponse update(UUID id, ServiceRequestCreateRequest request) {
+        ServiceRequest serviceRequest = serviceRequestRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Service request", id));
         if (serviceRequest.getStatus() == ServiceRequestStatus.DONE) {
             throw new PreconditionFailedException("Completed service request cannot be modified");
         }
 
-        UUID equipmentId = validateAndMapId(request.equipmentId(), "EquipmentId");
-        Priority priority = validateAndMapPriority(request.priority());
-        EquipmentResponse equipment = equipmentClient.getFresh(equipmentId);
+        EquipmentResponse equipment = equipmentClient.getFresh(request.equipmentId());
         if ("DECOMMISSIONED".equals(equipment.status())) {
             throw new PreconditionFailedException(
                     "Service request cannot be created for decommissioned equipment"
             );
         }
 
-        serviceRequest.setEquipmentId(equipmentId);
+        serviceRequest.setEquipmentId(request.equipmentId());
         serviceRequest.setTitle(request.title().trim());
         String description = request.description() == null ? null : request.description().trim();
         serviceRequest.setDescription(description == null || description.isEmpty() ? null : description);
-        serviceRequest.setPriority(priority);
+        serviceRequest.setPriority(request.priority());
 
         return serviceRequestMapper.toResponse(serviceRequestRepository.saveAndFlush(serviceRequest), equipment);
     }
 
     @Override
     @Transactional
-    public void delete(String id) {
-        UUID serviceRequestId = validateAndMapId(id, "Id");
-        ServiceRequest serviceRequest = serviceRequestRepository.findById(serviceRequestId)
-                .orElseThrow(() -> new ResourceNotFoundException("Service request", serviceRequestId));
+    public void delete(UUID id) {
+        ServiceRequest serviceRequest = serviceRequestRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Service request", id));
         if (serviceRequest.getStatus() == ServiceRequestStatus.DONE) {
             throw new PreconditionFailedException("Completed service request cannot be modified");
         }
@@ -162,25 +145,23 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
 
     @Override
     @Transactional
-    public ServiceRequestResponse changeStatus(String id, String status) {
-        ServiceRequestStatus newStatus = validateAndMapStatus(status);
-        UUID serviceRequestId = validateAndMapId(id, "Id");
-        ServiceRequest serviceRequest = serviceRequestRepository.findById(serviceRequestId)
-                .orElseThrow(() -> new ResourceNotFoundException("Service request", serviceRequestId));
+    public ServiceRequestResponse changeStatus(UUID id, ServiceRequestStatus status) {
+        ServiceRequest serviceRequest = serviceRequestRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Service request", id));
         ServiceRequestStatus currentStatus = serviceRequest.getStatus();
 
         if (serviceRequest.getStatus() == ServiceRequestStatus.DONE) {
             throw new PreconditionFailedException("Completed service request cannot be modified");
         }
         if (currentStatus == ServiceRequestStatus.CANCELLED
-                && newStatus == ServiceRequestStatus.IN_PROGRESS) {
+                && status == ServiceRequestStatus.IN_PROGRESS) {
             throw new PreconditionFailedException(
                     "Cancelled service request cannot be moved to in progress"
             );
         }
 
-        serviceRequest.setStatus(newStatus);
-        if (newStatus == ServiceRequestStatus.DONE) {
+        serviceRequest.setStatus(status);
+        if (status == ServiceRequestStatus.DONE) {
             serviceRequest.setCompletedAt(LocalDate.now());
         }
 
@@ -202,38 +183,4 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
             throw new ValueTooLargeException("Page size", MAX_PAGE_SIZE);
         }
     }
-
-    private Priority validateAndMapPriority(String priority) {
-        if (priority == null || priority.isBlank()) {
-            throw new RequiredFieldException("Priority");
-        }
-        try {
-            return Priority.valueOf(priority.trim());
-        } catch (IllegalArgumentException exception) {
-            throw new InvalidFieldValueException("Priority");
-        }
-    }
-
-    private ServiceRequestStatus validateAndMapStatus(String status) {
-        if (status == null || status.isBlank()) {
-            throw new RequiredFieldException("Status");
-        }
-        try {
-            return ServiceRequestStatus.valueOf(status.trim());
-        } catch (IllegalArgumentException exception) {
-            throw new InvalidFieldValueException("Status");
-        }
-    }
-
-    private UUID validateAndMapId(String id, String fieldName) {
-        if (id == null || id.isEmpty()) {
-            throw new RequiredFieldException(fieldName);
-        }
-        try {
-            return UUID.fromString(id);
-        } catch (IllegalArgumentException exception) {
-            throw new InvalidIdException(fieldName);
-        }
-    }
-
 }

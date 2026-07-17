@@ -1,19 +1,16 @@
 package com.example.equipment.services;
 
 import com.example.equipment.dto.EquipmentTypeCreateRequest;
-import com.example.equipment.dto.EquipmentTypeListFilter;
 import com.example.equipment.dto.EquipmentTypeResponse;
-import com.example.platform.common.pagination.PageDto;
 import com.example.equipment.entity.EquipmentType;
 import com.example.equipment.mapper.EquipmentMapper;
-import com.example.platform.common.exception.InvalidIdException;
-import com.example.platform.common.exception.RequiredFieldException;
+import com.example.equipment.repository.EquipmentTypeRepository;
+import com.example.platform.common.etag.EtagUtils;
 import com.example.platform.common.exception.ResourceAlreadyExistsException;
 import com.example.platform.common.exception.ResourceNotFoundException;
 import com.example.platform.common.exception.ValueTooLargeException;
 import com.example.platform.common.exception.ValueTooSmallException;
-import com.example.equipment.repository.EquipmentTypeRepository;
-import com.example.platform.common.etag.EtagUtils;
+import com.example.platform.common.pagination.PageDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,10 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import java.util.UUID;
 
-import static com.example.platform.common.pagination.PaginationConstants.DEFAULT_PAGE_NUMBER;
-import static com.example.platform.common.pagination.PaginationConstants.DEFAULT_PAGE_SIZE;
-import static com.example.platform.common.pagination.PaginationConstants.MAX_PAGE_SIZE;
-import static com.example.platform.common.pagination.PaginationConstants.MIN_PAGE_SIZE;
+import static com.example.platform.common.pagination.PaginationConstants.*;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +32,7 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<EquipmentType> getById(UUID id) {
+    public Optional<EquipmentType> findById(UUID id) {
         return equipmentTypeRepository.findById(id);
     }
 
@@ -65,7 +59,6 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
     @Override
     @Transactional(readOnly = true)
     public PageDto<EquipmentTypeResponse> list(
-            EquipmentTypeListFilter filter,
             Integer pageSize,
             Integer pageNumber
     ) {
@@ -84,30 +77,20 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
                 equipmentMapper::toTypeResponse
         );
     }
+
     @Override
     @Transactional(readOnly = true)
-    public EquipmentTypeResponse getById(String id) {
-        UUID equipmentTypeId = validateAndMapId(id, "Id");
-        EquipmentType equipmentType = equipmentTypeRepository.findById(equipmentTypeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Equipment type", equipmentTypeId));
+    public EquipmentTypeResponse getById(UUID id) {
+        EquipmentType equipmentType = equipmentTypeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment type", id));
         return equipmentMapper.toTypeResponse(equipmentType);
     }
 
     @Override
     @Transactional
-    public EquipmentTypeResponse update(String id, String etag, EquipmentTypeCreateRequest request) {
-        if (id == null || id.isEmpty()) {
-            throw new RequiredFieldException("Id");
-        }
-        UUID equipmentTypeId;
-        try {
-            equipmentTypeId = UUID.fromString(id);
-        } catch (IllegalArgumentException exception) {
-            throw new InvalidIdException("Id");
-        }
-
-        EquipmentType equipmentType = equipmentTypeRepository.findById(equipmentTypeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Equipment type", equipmentTypeId));
+    public EquipmentTypeResponse update(UUID id, String etag, EquipmentTypeCreateRequest request) {
+        EquipmentType equipmentType = equipmentTypeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment type", id));
         EtagUtils.validateIfMatch(etag, equipmentType.getEtag());
 
         String name = request.name().trim();
@@ -125,13 +108,12 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
 
         return equipmentMapper.toTypeResponse(equipmentTypeRepository.saveAndFlush(equipmentType));
     }
+
     @Override
     @Transactional
-    public void delete(String id, String etag) {
-        UUID equipmentTypeId = validateAndMapId(id, "Id");
-
-        EquipmentType equipmentType = equipmentTypeRepository.findById(equipmentTypeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Equipment type", equipmentTypeId));
+    public void delete(UUID id, String etag) {
+        EquipmentType equipmentType = equipmentTypeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment type", id));
         EtagUtils.validateIfMatch(etag, equipmentType.getEtag());
         equipmentTypeRepository.delete(equipmentType);
     }
@@ -145,17 +127,6 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
         }
         if (pageSize != null && pageSize > MAX_PAGE_SIZE) {
             throw new ValueTooLargeException("Page size", MAX_PAGE_SIZE);
-        }
-    }
-
-    private UUID validateAndMapId(String id, String fieldName) {
-        if (id == null || id.isEmpty()) {
-            throw new RequiredFieldException(fieldName);
-        }
-        try {
-            return UUID.fromString(id);
-        } catch (IllegalArgumentException e) {
-            throw new InvalidIdException(fieldName);
         }
     }
 

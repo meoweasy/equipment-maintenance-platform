@@ -3,8 +3,10 @@ package com.example.equipment.services;
 import com.example.equipment.dto.EquipmentCreateRequest;
 import com.example.equipment.dto.EquipmentListFilter;
 import com.example.equipment.dto.EquipmentResponse;
-import com.example.platform.common.pagination.PageDto;
 import com.example.equipment.enums.EquipmentStatus;
+import com.example.platform.common.pagination.PageDto;
+
+import java.util.UUID;
 
 public interface EquipmentService {
 
@@ -16,11 +18,11 @@ public interface EquipmentService {
             Integer pageNumber
     );
 
-    EquipmentResponse getById(String id);
+    EquipmentResponse getById(UUID id);
 
-    EquipmentResponse update(String id, String etag, EquipmentCreateRequest request);
+    EquipmentResponse update(UUID id, String etag, EquipmentCreateRequest request);
 
-    void delete(String id, String etag);
+    void delete(UUID id, String etag);
 
-    EquipmentResponse changeStatus(String id, String etag, String status);
+    EquipmentResponse changeStatus(UUID id, String etag, EquipmentStatus status);
 }

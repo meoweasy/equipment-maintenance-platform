@@ -1,9 +1,12 @@
 package com.example.maintenance.services;
 
-import com.example.platform.common.pagination.PageDto;
 import com.example.maintenance.dto.ServiceRequestCreateRequest;
 import com.example.maintenance.dto.ServiceRequestListFilter;
 import com.example.maintenance.dto.ServiceRequestResponse;
+import com.example.maintenance.enums.ServiceRequestStatus;
+import com.example.platform.common.pagination.PageDto;
+
+import java.util.UUID;
 
 public interface ServiceRequestService {
 
@@ -12,11 +15,11 @@ public interface ServiceRequestService {
     PageDto<ServiceRequestResponse> list(ServiceRequestListFilter filter, Integer pageSize,
                                          Integer pageNumber);
 
-    ServiceRequestResponse getById(String id);
+    ServiceRequestResponse getById(UUID id);
 
-    ServiceRequestResponse update(String id, ServiceRequestCreateRequest request);
+    ServiceRequestResponse update(UUID id, ServiceRequestCreateRequest request);
 
-    void delete(String id);
+    void delete(UUID id);
 
-    ServiceRequestResponse changeStatus(String id, String status);
+    ServiceRequestResponse changeStatus(UUID id, ServiceRequestStatus status);
 }
