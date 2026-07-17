@@ -19,3 +19,4 @@ info:
 services:
   equipment:
     base-url: ${EQUIPMENT_SERVICE_URL:http://localhost:8081}
+    cache-ttl: ${EQUIPMENT_CACHE_TTL:30s}

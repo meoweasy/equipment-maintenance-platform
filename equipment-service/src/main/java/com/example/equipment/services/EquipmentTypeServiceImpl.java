@@ -25,14 +25,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.example.platform.common.pagination.PaginationConstants.DEFAULT_PAGE_NUMBER;
+import static com.example.platform.common.pagination.PaginationConstants.DEFAULT_PAGE_SIZE;
+import static com.example.platform.common.pagination.PaginationConstants.MAX_PAGE_SIZE;
+import static com.example.platform.common.pagination.PaginationConstants.MIN_PAGE_SIZE;
+
 @Service
 @RequiredArgsConstructor
 public class EquipmentTypeServiceImpl implements EquipmentTypeService {
-
-    public static final int PAGE_SIZE_DEFAULT = 20;
-    public static final int PAGE_NUMBER_DEFAULT = 0;
-    public static final int PAGE_SIZE_MAX = 20;
-    public static final int PAGE_SIZE_MIN = 1;
 
     private final EquipmentTypeRepository equipmentTypeRepository;
     private final EquipmentMapper equipmentMapper;
@@ -73,8 +73,8 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
     ) {
         validateList(pageSize, pageNumber);
 
-        pageNumber = pageNumber == null ? PAGE_NUMBER_DEFAULT : pageNumber;
-        pageSize = pageSize == null ? PAGE_SIZE_DEFAULT : pageSize;
+        pageNumber = pageNumber == null ? DEFAULT_PAGE_NUMBER : pageNumber;
+        pageSize = pageSize == null ? DEFAULT_PAGE_SIZE : pageSize;
         Pageable pageable = PageRequest.of(
                 pageNumber,
                 pageSize,
@@ -173,11 +173,11 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
         if (pageNumber != null && pageNumber < 0) {
             throw new ValueTooSmallException("Page number", 0);
         }
-        if (pageSize != null && pageSize < PAGE_SIZE_MIN) {
-            throw new ValueTooSmallException("Page size", PAGE_SIZE_MIN);
+        if (pageSize != null && pageSize < MIN_PAGE_SIZE) {
+            throw new ValueTooSmallException("Page size", MIN_PAGE_SIZE);
         }
-        if (pageSize != null && pageSize > PAGE_SIZE_MAX) {
-            throw new ValueTooLargeException("Page size", PAGE_SIZE_MAX);
+        if (pageSize != null && pageSize > MAX_PAGE_SIZE) {
+            throw new ValueTooLargeException("Page size", MAX_PAGE_SIZE);
         }
     }
 

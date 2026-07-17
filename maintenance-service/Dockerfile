@@ -3,11 +3,13 @@ FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /workspace
 
 COPY pom.xml ./
+COPY platform-common/pom.xml platform-common/pom.xml
 COPY equipment-service/pom.xml equipment-service/pom.xml
 COPY maintenance-service/pom.xml maintenance-service/pom.xml
 RUN --mount=type=cache,target=/root/.m2 \
     mvn -B -pl maintenance-service -am dependency:go-offline
 
+COPY platform-common/src platform-common/src
 COPY maintenance-service/src maintenance-service/src
 RUN --mount=type=cache,target=/root/.m2 \
     mvn -B -pl maintenance-service -am package -DskipTests

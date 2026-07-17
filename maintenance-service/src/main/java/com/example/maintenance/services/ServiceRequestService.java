@@ -9,7 +9,8 @@ public interface ServiceRequestService {
 
     ServiceRequestResponse create(ServiceRequestCreateRequest request);
 
-    PageDto<ServiceRequestResponse> list(ServiceRequestListFilter filter);
+    PageDto<ServiceRequestResponse> list(ServiceRequestListFilter filter, Integer pageSize,
+                                         Integer pageNumber);
 
     ServiceRequestResponse getById(String id);
 
