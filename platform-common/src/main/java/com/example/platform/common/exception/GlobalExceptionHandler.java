@@ -39,6 +39,14 @@ public class GlobalExceptionHandler {
                 : "Resource was changed by another request";
         return build(HttpStatus.PRECONDITION_FAILED, message, request);
     }
+    @ExceptionHandler(PreconditionFailedException.class)
+    public ResponseEntity<ApiErrorResponse> handleBusinessPreconditionFailed(
+            PreconditionFailedException exception,
+            HttpServletRequest request
+    ) {
+        return build(HttpStatus.PRECONDITION_FAILED, exception.getMessage(), request);
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleNotFound(ResourceNotFoundException exception,
                                                            HttpServletRequest request) {

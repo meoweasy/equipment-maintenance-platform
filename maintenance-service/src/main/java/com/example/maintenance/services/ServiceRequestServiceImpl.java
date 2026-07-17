@@ -15,7 +15,7 @@ import com.example.platform.common.exception.InvalidFieldValueException;
 import com.example.platform.common.exception.InvalidIdException;
 import com.example.platform.common.exception.RequiredFieldException;
 import com.example.platform.common.exception.ResourceNotFoundException;
-import com.example.platform.common.exception.StatusChangeNotAllowedException;
+import com.example.platform.common.exception.PreconditionFailedException;
 import com.example.platform.common.exception.ValueTooLargeException;
 import com.example.platform.common.exception.ValueTooSmallException;
 import com.example.platform.common.pagination.PageDto;
@@ -52,7 +52,7 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         Priority priority = validateAndMapPriority(request.priority());
         EquipmentResponse equipment = equipmentClient.getFresh(equipmentId);
         if ("DECOMMISSIONED".equals(equipment.status())) {
-            throw new StatusChangeNotAllowedException(
+            throw new PreconditionFailedException(
                     "Service request cannot be created for decommissioned equipment"
             );
         }
@@ -127,14 +127,14 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         ServiceRequest serviceRequest = serviceRequestRepository.findById(serviceRequestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Service request", serviceRequestId));
         if (serviceRequest.getStatus() == ServiceRequestStatus.DONE) {
-            throw new StatusChangeNotAllowedException("Completed service request cannot be modified");
+            throw new PreconditionFailedException("Completed service request cannot be modified");
         }
 
         UUID equipmentId = validateAndMapId(request.equipmentId(), "EquipmentId");
         Priority priority = validateAndMapPriority(request.priority());
         EquipmentResponse equipment = equipmentClient.getFresh(equipmentId);
         if ("DECOMMISSIONED".equals(equipment.status())) {
-            throw new StatusChangeNotAllowedException(
+            throw new PreconditionFailedException(
                     "Service request cannot be created for decommissioned equipment"
             );
         }
@@ -155,10 +155,10 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         ServiceRequest serviceRequest = serviceRequestRepository.findById(serviceRequestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Service request", serviceRequestId));
         if (serviceRequest.getStatus() == ServiceRequestStatus.DONE) {
-            throw new StatusChangeNotAllowedException("Completed service request cannot be modified");
+            throw new PreconditionFailedException("Completed service request cannot be modified");
         }
         if (serviceRequest.getStatus() == ServiceRequestStatus.IN_PROGRESS) {
-            throw new StatusChangeNotAllowedException("Service request in progress cannot be deleted");
+            throw new PreconditionFailedException("Service request in progress cannot be deleted");
         }
         serviceRequestRepository.delete(serviceRequest);
     }
@@ -173,11 +173,11 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         ServiceRequestStatus currentStatus = serviceRequest.getStatus();
 
         if (serviceRequest.getStatus() == ServiceRequestStatus.DONE) {
-            throw new StatusChangeNotAllowedException("Completed service request cannot be modified");
+            throw new PreconditionFailedException("Completed service request cannot be modified");
         }
         if (currentStatus == ServiceRequestStatus.CANCELLED
                 && newStatus == ServiceRequestStatus.IN_PROGRESS) {
-            throw new StatusChangeNotAllowedException(
+            throw new PreconditionFailedException(
                     "Cancelled service request cannot be moved to in progress"
             );
         }
