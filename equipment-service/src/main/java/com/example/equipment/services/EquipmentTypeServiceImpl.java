@@ -6,7 +6,6 @@ import com.example.equipment.dto.EquipmentTypeResponse;
 import com.example.platform.common.pagination.PageDto;
 import com.example.equipment.entity.EquipmentType;
 import com.example.equipment.mapper.EquipmentMapper;
-import com.example.platform.common.exception.BlankFieldException;
 import com.example.platform.common.exception.InvalidIdException;
 import com.example.platform.common.exception.RequiredFieldException;
 import com.example.platform.common.exception.ResourceAlreadyExistsException;
@@ -46,7 +45,6 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
     @Override
     @Transactional
     public EquipmentTypeResponse create(EquipmentTypeCreateRequest request) {
-        validateCreate(request);
 
         String name = request.name().trim();
         if (equipmentTypeRepository.existsByName(name)) {
@@ -107,7 +105,6 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
         } catch (IllegalArgumentException exception) {
             throw new InvalidIdException("Id");
         }
-        validateCreate(request);
 
         EquipmentType equipmentType = equipmentTypeRepository.findById(equipmentTypeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment type", equipmentTypeId));
@@ -137,36 +134,6 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment type", equipmentTypeId));
         EtagUtils.validateIfMatch(etag, equipmentType.getEtag());
         equipmentTypeRepository.delete(equipmentType);
-    }
-
-    private void validateCreate(EquipmentTypeCreateRequest request) {
-        if (request == null) {
-            throw new RequiredFieldException("Create request");
-        }
-        if (request.name() == null || request.name().isEmpty()) {
-            throw new RequiredFieldException("Name");
-        }
-        if (request.name().isBlank()) {
-            throw new BlankFieldException("Name");
-        }
-
-        if (request.manufacturer() == null || request.manufacturer().isEmpty()) {
-            throw new RequiredFieldException("Manufacturer");
-        }
-        if (request.manufacturer().isBlank()) {
-            throw new BlankFieldException("Manufacturer");
-        }
-
-        if (request.maintenanceIntervalDays() == null) {
-            throw new RequiredFieldException("Maintenance interval days");
-        }
-        if (request.maintenanceIntervalDays() < 1) {
-            throw new ValueTooSmallException("Maintenance interval days", 1);
-        }
-
-        if (request.description() != null && request.description().isBlank()) {
-            throw new BlankFieldException("Description");
-        }
     }
 
     private void validateList(Integer pageSize, Integer pageNumber) {

@@ -8,7 +8,6 @@ import com.example.equipment.entity.Equipment;
 import com.example.equipment.entity.EquipmentType;
 import com.example.equipment.enums.EquipmentStatus;
 import com.example.equipment.mapper.EquipmentMapper;
-import com.example.platform.common.exception.BlankFieldException;
 import com.example.platform.common.exception.InvalidFieldValueException;
 import com.example.platform.common.exception.InvalidIdException;
 import com.example.platform.common.exception.RequiredFieldException;
@@ -46,7 +45,6 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Override
     @Transactional
     public EquipmentResponse create(EquipmentCreateRequest request) {
-        validateCreate(request);
 
         if (equipmentRepository.existsByInventoryNumber(request.inventoryNumber())) {
             throw new ResourceAlreadyExistsException("Equipment with inventory number already exists");
@@ -114,7 +112,6 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Transactional
     public EquipmentResponse update(String id, String etag, EquipmentCreateRequest request) {
         UUID equipmentId = validateAndMapId(id, "Id");
-        validateCreate(request);
 
         Equipment equipment = equipmentRepository.findById(equipmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment", equipmentId));
@@ -187,33 +184,6 @@ public class EquipmentServiceImpl implements EquipmentService {
         }
         if (pageSize != null && pageSize > MAX_PAGE_SIZE) {
             throw new ValueTooLargeException("Page size", MAX_PAGE_SIZE);
-        }
-    }
-
-    private void validateCreate(EquipmentCreateRequest request) {
-        if (request == null) {
-            throw new RequiredFieldException("Create request");
-        }
-
-        if (request.name() == null || request.name().isEmpty()) {
-            throw new RequiredFieldException("Name");
-        }
-        if (request.name().isBlank()) {
-            throw new BlankFieldException("Name");
-        }
-
-        if (request.inventoryNumber() == null) {
-            throw new RequiredFieldException("Inventory number");
-        }
-        if (request.inventoryNumber() < 1) {
-            throw new ValueTooSmallException("Inventory number", 1);
-        }
-
-        if (request.location() == null || request.location().isEmpty()) {
-            throw new RequiredFieldException("Location");
-        }
-        if (request.location().isBlank()) {
-            throw new BlankFieldException("Location");
         }
     }
 

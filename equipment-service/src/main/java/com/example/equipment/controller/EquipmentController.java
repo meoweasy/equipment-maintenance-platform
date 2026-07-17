@@ -5,6 +5,7 @@ import com.example.equipment.dto.EquipmentListFilter;
 import com.example.equipment.dto.EquipmentResponse;
 import com.example.platform.common.pagination.PageDto;
 import com.example.equipment.services.EquipmentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ public class EquipmentController {
     private final EquipmentService equipmentService;
 
     @PostMapping(API_PATH)
-    public ResponseEntity<EquipmentResponse> create(@RequestBody EquipmentCreateRequest request) {
+    public ResponseEntity<EquipmentResponse> create(@Valid @RequestBody EquipmentCreateRequest request) {
         EquipmentResponse response = equipmentService.create(request);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
@@ -50,7 +51,7 @@ public class EquipmentController {
     public ResponseEntity<EquipmentResponse> update(
             @PathVariable String id,
             @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String etag,
-            @RequestBody EquipmentCreateRequest request
+            @Valid @RequestBody EquipmentCreateRequest request
     ) {
         return withEtag(equipmentService.update(id, etag, request));
     }

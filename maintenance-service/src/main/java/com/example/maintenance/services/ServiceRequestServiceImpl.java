@@ -10,7 +10,6 @@ import com.example.maintenance.enums.Priority;
 import com.example.maintenance.enums.ServiceRequestStatus;
 import com.example.maintenance.mapper.ServiceRequestMapper;
 import com.example.maintenance.repository.ServiceRequestRepository;
-import com.example.platform.common.exception.BlankFieldException;
 import com.example.platform.common.exception.InvalidFieldValueException;
 import com.example.platform.common.exception.InvalidIdException;
 import com.example.platform.common.exception.RequiredFieldException;
@@ -47,7 +46,6 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     @Override
     @Transactional
     public ServiceRequestResponse create(ServiceRequestCreateRequest request) {
-        validateRequest(request);
         UUID equipmentId = validateAndMapId(request.equipmentId(), "EquipmentId");
         Priority priority = validateAndMapPriority(request.priority());
         EquipmentResponse equipment = equipmentClient.getFresh(equipmentId);
@@ -122,7 +120,6 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
     @Override
     @Transactional
     public ServiceRequestResponse update(String id, ServiceRequestCreateRequest request) {
-        validateRequest(request);
         UUID serviceRequestId = validateAndMapId(id, "Id");
         ServiceRequest serviceRequest = serviceRequestRepository.findById(serviceRequestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Service request", serviceRequestId));
@@ -203,18 +200,6 @@ public class ServiceRequestServiceImpl implements ServiceRequestService {
         }
         if (pageSize != null && pageSize > MAX_PAGE_SIZE) {
             throw new ValueTooLargeException("Page size", MAX_PAGE_SIZE);
-        }
-    }
-
-    private void validateRequest(ServiceRequestCreateRequest request) {
-        if (request == null) {
-            throw new RequiredFieldException("Create request");
-        }
-        if (request.title() == null || request.title().isEmpty()) {
-            throw new RequiredFieldException("Title");
-        }
-        if (request.title().isBlank()) {
-            throw new BlankFieldException("Title");
         }
     }
 
