@@ -4,8 +4,10 @@ import com.example.equipment.dto.EquipmentTypeCreateRequest;
 import com.example.equipment.dto.EquipmentTypeResponse;
 import com.example.equipment.entity.EquipmentType;
 import com.example.equipment.mapper.EquipmentMapper;
+import com.example.equipment.repository.EquipmentRepository;
 import com.example.equipment.repository.EquipmentTypeRepository;
 import com.example.platform.common.etag.EtagUtils;
+import com.example.platform.common.exception.PreconditionFailedException;
 import com.example.platform.common.exception.ResourceAlreadyExistsException;
 import com.example.platform.common.exception.ResourceNotFoundException;
 import com.example.platform.common.pagination.PageDto;
@@ -26,6 +28,7 @@ import static com.example.platform.common.pagination.PaginationConstants.*;
 public class EquipmentTypeServiceImpl implements EquipmentTypeService {
 
     private final EquipmentTypeRepository equipmentTypeRepository;
+    private final EquipmentRepository equipmentRepository;
     private final EquipmentMapper equipmentMapper;
 
     @Override
@@ -112,6 +115,13 @@ public class EquipmentTypeServiceImpl implements EquipmentTypeService {
         EquipmentType equipmentType = equipmentTypeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment type", id));
         EtagUtils.validateIfMatch(etag, equipmentType.getEtag());
+
+        if (equipmentRepository.existsByEquipmentType(equipmentType)) {
+            throw new PreconditionFailedException(
+                    "Equipment type cannot be deleted while equipment is assigned to it"
+            );
+        }
+
         equipmentTypeRepository.delete(equipmentType);
     }
 

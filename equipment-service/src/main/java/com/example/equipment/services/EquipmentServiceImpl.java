@@ -1,5 +1,6 @@
 package com.example.equipment.services;
 
+import com.example.equipment.client.MaintenanceClient;
 import com.example.equipment.dto.EquipmentCreateRequest;
 import com.example.equipment.dto.EquipmentListFilter;
 import com.example.equipment.dto.EquipmentResponse;
@@ -31,6 +32,7 @@ public class EquipmentServiceImpl implements EquipmentService {
     private final EquipmentRepository equipmentRepository;
     private final EquipmentTypeService equipmentTypeService;
     private final EquipmentMapper equipmentMapper;
+    private final MaintenanceClient maintenanceClient;
 
     @Override
     @Transactional
@@ -124,6 +126,13 @@ public class EquipmentServiceImpl implements EquipmentService {
         Equipment equipment = equipmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment", id));
         EtagUtils.validateIfMatch(etag, equipment.getEtag());
+
+        if (maintenanceClient.hasActiveRequest(id)) {
+            throw new PreconditionFailedException(
+                    "Equipment cannot be deleted while it has active service requests"
+            );
+        }
+
         equipmentRepository.delete(equipment);
     }
 

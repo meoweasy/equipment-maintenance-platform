@@ -28,3 +28,7 @@ info:
   app:
     name: Equipment Service
     java: 17
+services:
+  maintenance:
+    base-url: ${MAINTENANCE_SERVICE_URL:http://localhost:8082}
+    cache-ttl: ${MAINTENANCE_CACHE_TTL:5s}

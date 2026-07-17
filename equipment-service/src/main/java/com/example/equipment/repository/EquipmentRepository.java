@@ -13,5 +13,7 @@ import java.util.UUID;
 public interface EquipmentRepository extends JpaRepository<Equipment, UUID> {
     boolean existsByInventoryNumber(int inventoryNumber);
 
+    boolean existsByEquipmentType(EquipmentType equipmentType);
+
     Page<Equipment> findAllByEquipmentType(EquipmentType equipmentType, Pageable pageable);
 }
